@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Withdrawal } from './withdrawal.entity';
@@ -20,11 +20,11 @@ export class WithdrawalsService {
     return withdrawal;
   }
 
-  async create(body: { amount: number; payment_method_id: number; wallet_id: number; currency_code?: string }) {
+  async create(body: { amount: number; payment_method_id: number; wallet_id: number; currency_code?: string }, requesting_user_id: number) {
     const fee = body.amount * 0.02;
     const net = body.amount - fee;
     const withdrawal = this.withdrawalRepository.create({
-      user_id: 1,
+      user_id: requesting_user_id,
       wallet_id: body.wallet_id,
       payment_method_id: body.payment_method_id,
       amount: body.amount,

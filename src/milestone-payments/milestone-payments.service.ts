@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { MilestonePayment } from './milestone-payment.entity';
@@ -20,31 +20,25 @@ export class MilestonePaymentsService {
     return payment;
   }
 
-  async create(body: {
-    escrow_id: number;
-    milestone_id: number;
-    title: string;
-    amount: number;
-    due_date?: Date;
-  }) {
+  async create(body: { escrow_id: number; milestone_id: number; title: string; amount: number; due_date?: Date }) {
     const payment = this.milestonePaymentRepository.create(body);
     return this.milestonePaymentRepository.save(payment);
   }
 
-  async approve(id: number) {
+  async approve(id: number, requesting_user_id: number) {
     const payment = await this.findOne(id);
     payment.approval_status = 'approved';
     payment.approved_at = new Date();
     return this.milestonePaymentRepository.save(payment);
   }
 
-  async reject(id: number) {
+  async reject(id: number, requesting_user_id: number) {
     const payment = await this.findOne(id);
     payment.approval_status = 'rejected';
     return this.milestonePaymentRepository.save(payment);
   }
 
-  async release(id: number) {
+  async release(id: number, requesting_user_id: number) {
     const payment = await this.findOne(id);
     payment.release_status = 'released';
     payment.released_at = new Date();

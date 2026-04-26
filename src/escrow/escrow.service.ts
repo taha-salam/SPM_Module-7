@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Escrow } from './escrow.entity';
@@ -40,24 +40,33 @@ export class EscrowService {
     return this.escrowRepository.save(escrow);
   }
 
-  async fund(id: number, amount: number) {
+  async fund(id: number, amount: number, requesting_user_id: number) {
     const escrow = await this.findOne(id);
+    if (escrow.client_user_id !== requesting_user_id) {
+      throw new ForbiddenException('Only the client can fund this escrow');
+    }
     escrow.funded_amount = Number(escrow.funded_amount) + amount;
     escrow.escrow_status = 'active';
     escrow.funded_at = new Date();
     return this.escrowRepository.save(escrow);
   }
 
-  async freeze(id: number) {
+  async freeze(id: number, requesting_user_id: number) {
     const escrow = await this.findOne(id);
+    if (escrow.client_user_id !== requesting_user_id) {
+      throw new ForbiddenException('Only the client can freeze this escrow');
+    }
     escrow.escrow_status = 'frozen';
     return this.escrowRepository.save(escrow);
   }
 
-  async close(id: number) {
-   const escrow = await this.findOne(id);
-   escrow.escrow_status = 'completed';
-   escrow.closed_at = new Date();
-   return this.escrowRepository.save(escrow);
+  async close(id: number, requesting_user_id: number) {
+    const escrow = await this.findOne(id);
+    if (escrow.client_user_id !== requesting_user_id) {
+      throw new ForbiddenException('Only the client can close this escrow');
+    }
+    escrow.escrow_status = 'completed';
+    escrow.closed_at = new Date();
+    return this.escrowRepository.save(escrow);
   }
 }

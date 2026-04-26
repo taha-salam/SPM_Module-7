@@ -1,5 +1,6 @@
-import { Controller, Get, Post, Patch, Body, Param } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Body, Param, UseGuards, Headers } from '@nestjs/common';
 import { RefundsService } from './refunds.service';
+import { OwnershipGuard } from '../common/guards/ownership.guard';
 
 @Controller('refunds')
 export class RefundsController {
@@ -16,24 +17,31 @@ export class RefundsController {
   }
 
   @Post()
-  create(@Body() body: {
-    transaction_id: number;
-    escrow_id: number;
-    milestone_payment_id?: number;
-    requested_by: number;
-    reason: string;
-    refund_amount: number;
-  }) {
-    return this.refundsService.create(body);
+  @UseGuards(OwnershipGuard)
+  create(
+    @Body() body: { transaction_id: number; escrow_id: number; milestone_payment_id?: number; requested_by: number; reason: string; refund_amount: number },
+    @Headers('x-user-id') userId: string,
+  ) {
+    return this.refundsService.create(body, +userId);
   }
 
   @Patch(':id/approve')
-  approve(@Param('id') id: string, @Body() body: { admin_id: number }) {
+  @UseGuards(OwnershipGuard)
+  approve(
+    @Param('id') id: string,
+    @Body() body: { admin_id: number },
+    @Headers('x-user-id') userId: string,
+  ) {
     return this.refundsService.approve(+id, body.admin_id);
   }
 
   @Patch(':id/reject')
-  reject(@Param('id') id: string, @Body() body: { admin_id: number }) {
+  @UseGuards(OwnershipGuard)
+  reject(
+    @Param('id') id: string,
+    @Body() body: { admin_id: number },
+    @Headers('x-user-id') userId: string,
+  ) {
     return this.refundsService.reject(+id, body.admin_id);
   }
 }

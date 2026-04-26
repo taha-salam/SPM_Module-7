@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Refund } from './refund.entity';
@@ -20,14 +20,10 @@ export class RefundsService {
     return refund;
   }
 
-  async create(body: {
-    transaction_id: number;
-    escrow_id: number;
-    milestone_payment_id?: number;
-    requested_by: number;
-    reason: string;
-    refund_amount: number;
-  }) {
+  async create(body: { transaction_id: number; escrow_id: number; milestone_payment_id?: number; requested_by: number; reason: string; refund_amount: number }, requesting_user_id: number) {
+    if (body.requested_by !== requesting_user_id) {
+      throw new ForbiddenException('You can only request refunds for yourself');
+    }
     const refund = this.refundRepository.create(body);
     return this.refundRepository.save(refund);
   }

@@ -1,5 +1,6 @@
-import { Controller, Get, Post, Patch, Body, Param, Query } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Body, Param, Query, UseGuards, Headers } from '@nestjs/common';
 import { MilestonePaymentsService } from './milestone-payments.service';
+import { OwnershipGuard } from '../common/guards/ownership.guard';
 
 @Controller('milestone-payments')
 export class MilestonePaymentsController {
@@ -16,28 +17,38 @@ export class MilestonePaymentsController {
   }
 
   @Post()
-  create(@Body() body: {
-    escrow_id: number;
-    milestone_id: number;
-    title: string;
-    amount: number;
-    due_date?: Date;
-  }) {
+  @UseGuards(OwnershipGuard)
+  create(
+    @Body() body: { escrow_id: number; milestone_id: number; title: string; amount: number; due_date?: Date },
+    @Headers('x-user-id') userId: string,
+  ) {
     return this.milestonePaymentsService.create(body);
   }
 
   @Patch(':id/approve')
-  approve(@Param('id') id: string) {
-    return this.milestonePaymentsService.approve(+id);
+  @UseGuards(OwnershipGuard)
+  approve(
+    @Param('id') id: string,
+    @Headers('x-user-id') userId: string,
+  ) {
+    return this.milestonePaymentsService.approve(+id, +userId);
   }
 
   @Patch(':id/reject')
-  reject(@Param('id') id: string) {
-    return this.milestonePaymentsService.reject(+id);
+  @UseGuards(OwnershipGuard)
+  reject(
+    @Param('id') id: string,
+    @Headers('x-user-id') userId: string,
+  ) {
+    return this.milestonePaymentsService.reject(+id, +userId);
   }
 
   @Patch(':id/release')
-  release(@Param('id') id: string) {
-    return this.milestonePaymentsService.release(+id);
+  @UseGuards(OwnershipGuard)
+  release(
+    @Param('id') id: string,
+    @Headers('x-user-id') userId: string,
+  ) {
+    return this.milestonePaymentsService.release(+id, +userId);
   }
 }

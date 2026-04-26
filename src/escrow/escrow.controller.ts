@@ -1,5 +1,6 @@
-import { Controller, Get, Post, Body, Param } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, UseGuards, Headers } from '@nestjs/common';
 import { EscrowService } from './escrow.service';
+import { OwnershipGuard } from '../common/guards/ownership.guard';
 
 @Controller('escrow')
 export class EscrowController {
@@ -21,28 +22,45 @@ export class EscrowController {
   }
 
   @Post()
-  create(@Body() body: {
-    project_id: number;
-    client_user_id: number;
-    freelancer_user_id: number;
-    currency_code: string;
-    total_amount: number;
-  }) {
+  @UseGuards(OwnershipGuard)
+  create(
+    @Body() body: {
+      project_id: number;
+      client_user_id: number;
+      freelancer_user_id: number;
+      currency_code: string;
+      total_amount: number;
+    },
+    @Headers('x-user-id') userId: string,
+  ) {
     return this.escrowService.create(body);
   }
 
   @Post(':id/fund')
-  fund(@Param('id') id: string, @Body() body: { amount: number }) {
-    return this.escrowService.fund(+id, body.amount);
+  @UseGuards(OwnershipGuard)
+  fund(
+    @Param('id') id: string,
+    @Body() body: { amount: number },
+    @Headers('x-user-id') userId: string,
+  ) {
+    return this.escrowService.fund(+id, body.amount, +userId);
   }
 
   @Post(':id/freeze')
-  freeze(@Param('id') id: string) {
-    return this.escrowService.freeze(+id);
+  @UseGuards(OwnershipGuard)
+  freeze(
+    @Param('id') id: string,
+    @Headers('x-user-id') userId: string,
+  ) {
+    return this.escrowService.freeze(+id, +userId);
   }
 
   @Post(':id/close')
-  close(@Param('id') id: string) {
-    return this.escrowService.close(+id);
+  @UseGuards(OwnershipGuard)
+  close(
+    @Param('id') id: string,
+    @Headers('x-user-id') userId: string,
+  ) {
+    return this.escrowService.close(+id, +userId);
   }
 }
